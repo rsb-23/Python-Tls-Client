@@ -284,6 +284,14 @@ class Session:
     def __exit__(self, *args):
         self.close()
 
+    @property
+    def timeout(self):
+        return self.timeout_seconds
+
+    @timeout.setter
+    def timeout(self, seconds):
+        self.timeout_seconds = seconds
+
     def close(self) -> str:
         destroy_session_payload = {
             "sessionId": self._session_id
@@ -313,8 +321,14 @@ class Session:
         allow_redirects: Optional[bool] = False,
         insecure_skip_verify: Optional[bool] = False,
         timeout_seconds: Optional[int] = None,
+        timeout: Optional[int] = None,
         proxy: Optional[dict] = None  # Optional[dict[str, str]]
     ) -> Response:
+        # --- Timeout --------------------------------------------------------------------------------------------------
+        # maximum time to wait for a response
+        timeout_seconds = timeout or timeout_seconds or self.timeout_seconds
+        del timeout  # deleting alias to stop further usage
+
         # --- URL ------------------------------------------------------------------------------------------------------
         # Prepare URL - add params to url
         if params is not None:
@@ -374,11 +388,6 @@ class Session:
             proxy = proxy
         else:
             proxy = ""
-
-        # --- Timeout --------------------------------------------------------------------------------------------------
-        # maximum time to wait for a response
-
-        timeout_seconds = timeout_seconds or self.timeout_seconds
 
         # --- Certificate pinning --------------------------------------------------------------------------------------
         # pins a certificate so that it restricts which certificates are considered valid
